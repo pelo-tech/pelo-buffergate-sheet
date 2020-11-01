@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html ng-app="pelotonApp">
+  <head>
+  <style>
+
+  </style>
+    <base target="_top">
+    
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.0/angular.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script>
+angular.module('pelotonApp', [])
+  .controller('PelotonUserController', function($scope, $httpParamSerializer) {
+    var userController = this;
+    userController.loading=false;
+    userController.users=[];
+    userController.searchText="";
+    
+    
+    userController.followUser=function(user_id){
+    var myUserId=user_id;
+    google.script.run.withSuccessHandler(function(result){ 
+          if(result){
+          userController.users.map(function(user){ if(user.id==myUserId) user.relationship=result;});
+          $scope.$digest();          
+        }
+      }).followUser(user_id);
+    }
+    
+    userController.unfollowUser=function(user_id){
+    var myUserId=user_id;
+    google.script.run.withSuccessHandler(function(result){ 
+          if(result){
+          userController.users.map(function(user){ if(user.id==myUserId) user.relationship=result;});
+          $scope.$digest();          
+        }
+      }).unfollowUser(user_id);
+      }
+    
+    
+    
+    userController.searchUsers=function(){
+        userController.searchText = userController.searchText.replace(/[^A-Za-z0-9_]/gi, "");
+        userController.users=[];
+        if(userController.searchText=="") return;
+        userController.loading=true;
+        
+     google.script.run.withSuccessHandler(function(result){
+       console.log(JSON.stringify(result));
+       userController.users=result;
+       userController.loading=false;
+       $scope.$digest();
+     })
+      .searchUsers(userController.searchText);
+      
+    };
+    
+ 
+    userController.displayUser=function(user_id){
+       google.script.run.displayUser(user_id);
+    }
+    
+    
+  });
+</script>
+</head>
+  <body ng-controller="PelotonUserController as peloton"  >
+<div class="card" style="width: 18rem;">
+   <div class="card-header">Find Users</div>
+  <div class="card-body">
+  <form  id="user-filter-form">
+    <div>
+      <input type='text' placeholder='Leaderboard Name'
+        ng-model='peloton.searchText'
+        ng-model-options='{ debounce: 1500 }'
+        ng-change='peloton.searchUsers()'
+    />
+    </div>
+    <div ng-if="loading" style="background-color: yellow; padding: 20px 20px 20px 20px; border: 1px solid red;"><b>LOADING...</b></div>
+    
+    </form>
+    
+   </div>
+   <div class="card-footer">
+     
+   <!--button ng-disabled="! peloton.totalRides" ng-click="peloton.loadRides()"
+   class="badge badge-pill badge-danger" id="load">Load <span id='total' ng-show="peloton.totalRides!=null">{{peloton.totalRides}}</span> Classes </button> 
+     <a  ng-disabled="! peloton.totalRides" target="_blank" class="text-danger" title="Search on Peloton Site" href="https://members.onepeloton.com/classes/cycling?utm_source=ios_app&utm_medium=in_app&{{peloton.getQueryParams()}}">
+           <span class="fa fa-share"></span>
+        </a>
+   </div-->
+</div>
+</div>
+    
+
+<ul id="users"  class="list-unstyled">
+
+<li class="media mt-1 ml-2 mb-2" ng-repeat="user  in peloton.users" style="max-width: 400px">
+ 
+     <img style="max-width:50px; max-height:50px;" class=" rounded mr-3" src="{{user.image_url}}" alt="{{user.username}}">
+ 
+
+     <div class="media-body">
+      <h5 class="mt-0 mb-1">{{user.username}}</h5>
+      <h6 class="card-subtitle" ng-if="user.location">{{user.location}}</h6>
+     <small>
+     <span ng-if="user.is_profile_private" class="text-muted">This profile is private. <br/></span>
+     
+       <span >{{user.total_followers}} Followers.  {{user.total_following}} following {{user.total_workouts}} workouts</span>
+         <div ng-if="user.relationship">
+          Relationship: Me to user: {{user.relationship.me_to_user}} // User to me: {{user.relationship.user_to_me}}
+         </div>
+     
+      <!-- <span ng-if="ride.user_workouts" class="badge badge-pill badge-success" title="You took this ride {{ride.user_workouts}} time(s)">Taken</span>
+       button ng-if="ride.is_favorite" ng-click="peloton.clearBookmark(ride)" class="badge badge-pill badge-secondary">Bookmarked</button>
+       <button ng-if="!ride.is_favorite" ng-click="peloton.addBookmark(ride)"  class="badge badge-pill badge-info">Add Bookmark</button 
+
+       <h5 class="card-title">{{ride.title}}</h5>
+       <h6 class="card-subtitle mb-2 text-muted">{{ride.instructor.name}}<br>Aired on {{ride.aired | date:'MM/dd/yyyy @ h:mma'}}</h6> 
+       <p class="card-text">{{ride.description}}</p>-->
+ 
+       <!--<small class="text-muted">{{user.total_workouts}} total workouts</small>-->
+       <button ng-click="peloton.displayUser(user.id)" data-user-id="{{user.id}}" class="ride-load-button badge-pill badge badge-danger">Show Details</button>
+       
+       <a target="_blank" class="text-danger" title="Open on Peloton Site" href="https://members.onepeloton.com/members/{{user.username}}/overview">
+           <span class="fa fa-share"></span>
+        </a>
+   </small>      
+     </div>
+     <span class="border-bottom"></span>
+   </li>
+ 
+ 
+
+</ul>
+
+
+ 
+</body>
+</html>
+

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html ng-app="pelotonApp">
+  <head>
+  <style>
+
+  </style>
+    <base target="_top">
+    
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.0/angular.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script>
+angular.module('pelotonApp', [])
+  .controller('PelotonUserController', function($scope, $httpParamSerializer) {
+    var userController = this;
+    userController.profile=JSON.parse("<?=  JSON.stringify(getUserProfile(user_id)) ?>");
+    userController.overview=JSON.parse("<?=  JSON.stringify(getUserOverview(user_id)) ?>");
+    userController.loadWorkouts=function(profile){
+     google.script.run.handleLoadWorkouts(profile.user_id,profile.username);
+    };
+     userController.purgeWorkouts=function(profile){
+     google.script.run.handlePurgeUserData(profile.user_id,profile.username);
+    };
+    });
+</script>
+</head>
+
+  <body ng-controller="PelotonUserController as peloton">
+  
+  <div class="card">
+  <div class="card-header">
+    {{peloton.profile.username}}  ({{peloton.profile.location}})    
+    <button ng-if="!peloton.profile.private || peloton.profile.relationship.me_to_user=='following'" ng-click="peloton.loadWorkouts(peloton.profile)"  class="badge badge-pill badge-danger badge-info">Load Buffering Workouts</button >
+    <button ng-if="!peloton.profile.private || peloton.profile.relationship.me_to_user=='following'" ng-click="peloton.purgeWorkouts(peloton.profile)"  class="badge badge-pill  badge-secondary badge-info">Purge Workouts</button >
+  </div>
+  <div class="card-body">
+    
+     <div class="container">
+    <div class="row">
+      <div class="col-xs-offset-2 col-md-4">
+      
+    <img src="{{peloton.profile.image_url}}" style="max-width:200px" class="rounded float-left" alt="{{peloton.profile.username}}">
+      </div>
+       <div class="col-md-8">
+      <span ng-repeat="a in peloton.overview.achievement_counts.achievements">
+          <img src="{{a.template.image_url}}" style="max-width:30px; max-height:30px;" title="{{a.count}} times. {{a.template.name}} ({{a.template.description}})"/>
+        </span>
+      </div>
+     </div>
+    </div>
+    
+  </div>
+</div>
+
+
+
+
+<div class="container">
+  <div class="row mx-md-n3 mt-3">
+    <div class="col col-md-4 px-md-n2">
+         <div class="card">
+        <div class="card-body">
+      <h3>Workouts</h3>
+      <p class="card-text"> {{peloton.overview.workout_counts.total_workouts}} Total Workouts</p>
+      
+       <div ng-repeat="category in peloton.overview.workout_counts.workouts">
+          <b>{{category.name}}:</b> {{category.count}}
+      </div>
+      
+      <h3>Streaks</h3>
+      {{ peloton.overview.streaks.current_weekly}} weeks.
+      
+           </div>
+       </div>
+    </div>
+    <div class="col col-md-4 px-md-n2">
+      <div class="card">
+        <div class="card-body">
+              <h3>Personal Records</h3>
+
+
+       <div ng-repeat="pr in peloton.overview.personal_records ">
+          <h5>{{pr.name}} {{pr.count}}</h5> 
+          
+            <div ng-repeat="record in pr.records | orderBy:'record.name' ">
+               <b>{{record.name}}:</b> {{record.value}} {{record.unit}} <!-- small class="text-muted">{{record.workout_date  | date:"yyyy-MM-dd HH:mma"}}</small-->
+            </div>
+      </div>
+      </div>
+       </div>
+       
+       
+    </div>
+    <div class="col col-md-4 px-md-n2" >
+      <div class="card">
+         <div class="card-body">
+         <h3>Badges</h3>
+        <div  class="card-text" ng-repeat="a in peloton.overview.achievement_counts.achievements">
+          <b title="{{a.template.description}}">{{a.template.name}}:</b> {{a.count}}
+        </div>
+        </div>
+        </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
