@@ -39,6 +39,15 @@ function showSidebarUsers() {
       .showSidebar(html);
 }
 
+function sidebarSearchUsers(query){
+  var event=eventStart("sidebar search usrs",query);
+
+  var users=searchUsers(query);
+
+  eventEnd(event,"");
+  return JSON.parse(JSON.stringify(users));
+}
+
 function handleLoadWorkouts(user_id,username){
    SpreadsheetApp.getUi().alert("Loading user workouts. Results Tab will show you the results in a few seconds");
    populateWorkoutsFromCutoff(user_id,username);
@@ -59,6 +68,11 @@ function displayUser(id){
   
   
   
+  function testSubmit(){
+  var event={namedValues:{"Leaderboard Name":["DovOps"]}};
+  onFormSubmit(event);
+}
+
 function onFormSubmit(event){
  
   Logger.log(JSON.stringify(event));

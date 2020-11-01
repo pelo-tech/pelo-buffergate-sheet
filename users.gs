@@ -61,6 +61,7 @@ function changeRelationship(action, user_id){
 
 
 function searchUsers(query){
+  Logger.log("Query for users: "+query);
   var config=getConfigDetails();
   var peloton=config.peloton;
   if(query==null) return [];

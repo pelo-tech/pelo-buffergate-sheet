@@ -46,16 +46,19 @@ angular.module('pelotonApp', [])
     userController.searchUsers=function(){
         userController.searchText = userController.searchText.replace(/[^A-Za-z0-9_]/gi, "");
         userController.users=[];
+        console.log("Search Text "+userController.searchText);
         if(userController.searchText=="") return;
         userController.loading=true;
         
      google.script.run.withSuccessHandler(function(result){
+     console.log("Result");
+     console.log(result);
        console.log(JSON.stringify(result));
        userController.users=result;
        userController.loading=false;
        $scope.$digest();
      })
-      .searchUsers(userController.searchText);
+      .sidebarSearchUsers(userController.searchText);
       
     };
     
