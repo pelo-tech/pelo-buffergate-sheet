@@ -126,7 +126,7 @@ function onFormSubmit(event){
       } else if(profile.private) {
         // Try Following
         try{
-            progres.push("Attempting to follow-request user in order to get access to the workout list.");
+            progress.push("Attempting to follow-request user in order to get access to the workout list.");
             var result=changeRelationship("follow",profile.user_id);
             message +=" Relationship Changed: me to user:"+result.me_to_user +", user to me:"+result.user_to_me;
             status = "Requested to follow: "+result.me_to_user;
