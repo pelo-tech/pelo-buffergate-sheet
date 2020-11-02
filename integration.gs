@@ -77,6 +77,12 @@ function onFormSubmit(event){
  
   Logger.log(JSON.stringify(event));
   Logger.log(event.namedValues);
+  // Adding extra fields:
+  event.namedValues["AlreadyFollowing"]=null;
+  event.namedValues["UserID"]=null;
+  // Empty column should be purged
+  if(event.namedValues[""]) delete event.namedValues[""];
+  
   var message="";
   var username=event.namedValues["Leaderboard Name"][0];
   var formEvent=eventStart("New Registration", username);
@@ -190,6 +196,8 @@ function onFormSubmit(event){
 
   }
   
+  // Copy userID to first alphabetical column for VLOOKUPS
+  formValues["AA_user_id"]=formValues["UserID"];
 
  
   var options={htmlBody:html};

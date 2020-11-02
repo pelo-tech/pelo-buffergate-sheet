@@ -84,6 +84,10 @@ function populateWorkoutsFromCutoff(user_id,username){
 
   purgeUserData(user_id,username);
 
+  // Calculate VLookup Columns from Registration Sheet for Country and Airport Code
+  // Google Data Studio is being really annoying about this
+  var regSheet=REGISTRATION_SHEET_NAME;
+  var regFormulaPrefix="=VLOOKUP(INDIRECT(\"N\"&ROW()), '"+regSheet+"'!A:F,";
   
   var sheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
   var workouts=[];
@@ -102,7 +106,10 @@ function populateWorkoutsFromCutoff(user_id,username){
       timezone:workout.timezone,
       output:workout.output,
       buffering:workout.buffering,
-      bufferingv2:workout.bufferingv2
+      bufferingv2:workout.bufferingv2,
+      zzz_country:regFormulaPrefix+"4,FALSE)",
+      zzz_airport:regFormulaPrefix+"6,FALSE)",
+      zzz_city:regFormulaPrefix+"3,FALSE)"
     });
   });
   workouts=workouts.filter(workout=>{
