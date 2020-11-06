@@ -42,23 +42,29 @@ angular.module('pelotonApp', [])
       }
     
     
+    userController.reprocessUser=function(user){
+       user.loading=true;
+       google.script.run.withSuccessHandler(function(result){
+         user.loading=false;
+         $scope.$digest();
+         }).reprocessUser(user.id, user.username);
+         
+    }
     
     userController.searchUsers=function(){
         userController.searchText = userController.searchText.replace(/[^A-Za-z0-9_]/gi, "");
         userController.users=[];
-        console.log("Search Text "+userController.searchText);
         if(userController.searchText=="") return;
         userController.loading=true;
         
      google.script.run.withSuccessHandler(function(result){
-     console.log("Result");
-     console.log(result);
        console.log(JSON.stringify(result));
        userController.users=result;
+       userController.users.map(user=>{user.loading=false;});
        userController.loading=false;
        $scope.$digest();
      })
-      .sidebarSearchUsers(userController.searchText);
+      .searchUsers(userController.searchText);
       
     };
     
@@ -83,7 +89,7 @@ angular.module('pelotonApp', [])
         ng-change='peloton.searchUsers()'
     />
     </div>
-    <div ng-if="loading" style="background-color: yellow; padding: 20px 20px 20px 20px; border: 1px solid red;"><b>LOADING...</b></div>
+     <div   ng-if="peloton.loading"  style="text-align:center"> <i  class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i></div>
     
     </form>
     
@@ -114,11 +120,20 @@ angular.module('pelotonApp', [])
      <span ng-if="user.is_profile_private" class="text-muted">This profile is private. <br/></span>
      
        <span >{{user.total_followers}} Followers.  {{user.total_following}} following {{user.total_workouts}} workouts</span>
-         <div ng-if="user.relationship">
+        <div ng-if="user.relationship">
           Relationship: Me to user: {{user.relationship.me_to_user}} // User to me: {{user.relationship.user_to_me}}
-         </div>
+        <br/>
+         <button ng-if="user.relationship.me_to_user=='following'" ng-click="peloton.unfollowUser(user.id)" class="badge badge-pill badge-secondary">Unfollow</button>
+         <button ng-if="user.relationship.me_to_user=='none'" ng-click="peloton.followUser(user.id)" class="badge badge-pill badge-primary">Follow</button>
+         <button ng-if="user.relationship.me_to_user=='follow_pending'"  disabled="true"  class="badge badge-pill badge-secondary">Follow Requested</button>
+         <button ng-if="user.relationship.me_to_user=='following' || !user.is_profile_private" 
+         ng-click="peloton.reprocessUser(user)" class="badge badge-pill badge-secondary" ng-disabled="user.loading">
+          <i ng-if="user.loading" class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+          Reload Existing Results (If any)</button>
+
+        </div>
      
-      <!-- <span ng-if="ride.user_workouts" class="badge badge-pill badge-success" title="You took this ride {{ride.user_workouts}} time(s)">Taken</span>
+      <!--<span ng-if="ride.user_workouts" class="badge badge-pill badge-success" title="You took this ride {{ride.user_workouts}} time(s)">Taken</span>
        button ng-if="ride.is_favorite" ng-click="peloton.clearBookmark(ride)" class="badge badge-pill badge-secondary">Bookmarked</button>
        <button ng-if="!ride.is_favorite" ng-click="peloton.addBookmark(ride)"  class="badge badge-pill badge-info">Add Bookmark</button 
 

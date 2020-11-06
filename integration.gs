@@ -30,6 +30,24 @@ function showSidebarLogin() {
       .showModalDialog(html, "Peloton Log In");
 }
 
+function reprocessUser(user_id,  username){
+  var regSheet=SpreadsheetApp.getActive().getSheetByName(REGISTRATION_SHEET_NAME);
+  
+ var values=regSheet.getRange("A:A").getValues();
+ var found=false;
+ values.forEach(row =>{ if(row==user_id) found=true; });
+ if(found){
+   SpreadsheetApp.getUi().alert("Found registered user:"+username+". Reloading their workouts");
+    var workouts=populateWorkoutsFromCutoff(user_id,username);
+    SpreadsheetApp.getUi().alert("Reprocessed "+workouts.length+" workouts");
+    return workouts.length;
+  } else {
+    SpreadsheetApp.getUi().alert("Cannot find user registration for  "+username+". Can only load for users who are already registered");
+    return 0;
+  }
+
+}
+
 
 function showSidebarUsers() {
   var tmpl = HtmlService.createTemplateFromFile('users-sidebar.html').evaluate();
@@ -187,7 +205,7 @@ function onFormSubmit(event){
         html+="<td align='center'>"+workout.pr+"</td>";
         html+="<td>"+workout.platform+"</td>";
         html+='<td><a href="https://members.onepeloton.com/classes/cycling?utm_source=ios_app&utm_medium=in_app&modal=classDetailsModal&classId='+workout.ride_id+'">Class</a> | ';
-        html+='<a href="https://members.onepeloton.com/profile/'+profile.user_id+'/workouts/'+workout.id+'?utm_source=ios_app&utm_medium=in_app">Workout</a> </td>';
+        html+='<a href="https://members.onepeloton.com/profile/workouts/'+workout.id+'?utm_source=ios_app&utm_medium=in_app&locale=en-US">Workout</a> </td>';
         
       html+="</tr>";
     });

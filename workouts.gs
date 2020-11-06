@@ -112,9 +112,11 @@ function populateWorkoutsFromCutoff(user_id,username){
       zzz_city:regFormulaPrefix+"3,FALSE)"
     });
   });
+  
+  var hardware_filter=getConfigDetails().peloton.hardware_filter;
+  
   workouts=workouts.filter(workout=>{
-    // Bufferring on bike or tread, greater than 1sec
-    return  (workout.platform.indexOf("home_")==0) && 
+     return (!hardware_filter  || workout.platform.indexOf(hardware_filter)>-1) && 
     (workout.buffering>1 || workout.bufferingv2 > 1);
   });
   workouts=workouts.sort((a,b)=>{ return a.start-b.start ; });

@@ -13,25 +13,10 @@ var EMAIL_BCC_CELL="B8";
 var EMAIL_SUBJECT_CELL="B9";
 var LOG_SHEET_NAME="System Log";
 var REGISTRATION_SHEET_NAME="Registration";
+var HARDWARE_MATCH_CELL="B10";
 
 
-/*****
-   Dynamic Table Join Settings
-  
-   Use this to join ride results with 
-     user submitted registration data such as privacy-agreement
-     or gender, or age bracket, or assigned subgroup
-*****/
-var DATA_RESULTS_JOIN_COL="B12";
-var DATA_JOIN_SHEETNAME_CELL="B13";
-var DATA_JOIN_RANGE_CELL="B14";
-var DATA_JOIN_COL1_NAME_CELL="B15";
-var DATA_JOIN_COL1_COLUMN_CELL="B16";
-var DATA_JOIN_COL2_NAME_CELL="B17";
-var DATA_JOIN_COL2_COLUMN_CELL="B18";
-var DATA_JOIN_COL3_NAME_CELL="B19";
-var DATA_JOIN_COL3_COLUMN_CELL="B20";
-
+ 
 
 function testEventStart(){
 eventStart("test","1,2,3,4");
@@ -102,20 +87,10 @@ function getConfigDetails(){
    var user_id=cfg.getRange(USER_ID_CELL).getValue(); 
    var tz=cfg.getRange(TIME_ZONE_CELL).getValue();
    var cutoff_date=cfg.getRange(CUTOFF_DATE_CELL).getValue();
- var dataSettings={}; 
+   var harware_filter=cfg.getRange(HARDWARE_MATCH_CELL).getValue();
+   var dataSettings={}; 
 
- /* var dataSettings={
-     results_join_col:cfg.getRange(DATA_RESULTS_JOIN_COL).getValue(),
-     join_sheet_name:cfg.getRange(DATA_JOIN_SHEETNAME_CELL).getValue(),
-     join_range:cfg.getRange(DATA_JOIN_RANGE_CELL).getValue(),
-     col1_name:cfg.getRange(DATA_JOIN_COL1_NAME_CELL).getValue(),
-     col1_column:cfg.getRange(DATA_JOIN_COL1_COLUMN_CELL).getValue(),
-     col2_name:cfg.getRange(DATA_JOIN_COL2_NAME_CELL).getValue(),
-     col2_column:cfg.getRange(DATA_JOIN_COL2_COLUMN_CELL).getValue(),
-     col3_name:cfg.getRange(DATA_JOIN_COL3_NAME_CELL).getValue(),
-     col3_column:cfg.getRange(DATA_JOIN_COL3_COLUMN_CELL).getValue()
-  };
-*/
+
   return { 
     "email":{
       "to": cfg.getRange(EMAIL_TO_CELL).getValue(),
@@ -127,6 +102,7 @@ function getConfigDetails(){
     "dataSettings" :dataSettings,
     
     "peloton":{
+      "hardware_filter":harware_filter,
       "http_base":PELOTON_API_BASE,
       "session_id":session_id, 
       "user_id":user_id,
