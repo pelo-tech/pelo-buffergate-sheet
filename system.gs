@@ -34,6 +34,26 @@ Logger.log("EventStart: "+name+" /// "+arguments);
   return id;
 }
 
+function getDataAsObjects(sheet, range){
+  if(!range || range==null) range=sheet.getDataRange();
+  var rows=range.getValues();
+  var result=[];
+  if(rows.length>1){
+    var fields=rows[0];
+    for(var row=1; row<rows.length;++row){
+      var obj={};
+      for(var col=0; col<fields.length;++col){  
+        obj[fields[col]]=rows[row][col];
+      }
+      // row number in google sheets (1-based)
+      obj._row=1+row;
+      result.push(obj);
+    }
+  } 
+  return result;
+}
+
+
 function eventEnd(id, result){
   logSheet=SpreadsheetApp.getActive().getSheetByName(LOG_SHEET_NAME);
   var start=logSheet.getRange(id,2).getValue();

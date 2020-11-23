@@ -1,7 +1,7 @@
 function getWorkoutsRaw(user_id, page_number, limit, sort_by, joins){
   var config=getConfigDetails();
   var peloton=config.peloton;
-  if(!sort_by) sort_by='created_at,-pk';
+  if(!sort_by) sort_by='-created,-created_at,-pk';
   if(!joins) joins="ride,ride.instructor";
   var event=eventStart("GetWorkoutsRaw",user_id+","+ page_number+","+limit+","+sort_by+","+joins);
 
@@ -74,15 +74,39 @@ function testPurgeUserData(){
  purgeUserData('b3f902e4b6c54777a73b61471ebed471','DovOps');
 }
 
-function populateWorkoutsFromCutoff(user_id,username){
-  var event=eventStart("PopulateWorkoutsFromCutoff",user_id+","+username);
-  var results=loadWorkoutsFromCutoff(user_id,username);
+
+function testGetLastWorkout(){
+Logger.log( getLastWorkout('b3f902e4b6c54777a73b61471ebed471','DovOps'));
+
+}
+
+function getLastWorkout(user_id){
+  var sheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+  var workouts=getDataAsObjects(sheet);
+  workouts=workouts.filter(workout=> {return workout.user_id == user_id;}).sort((a,b)=> {return a.start-b.start;});
+  if (!workouts || !workouts.length) return null;
+  return workouts[workouts.length-1];
+}
+
+function populateWorkoutsIncrementally(user_id, username){
+  var event=eventStart("PopulateWorkoutsIncremental",user_id+","+username);
+  var workout=getLastWorkout(user_id);
+  var last_workout_id=(workout)?workout.id:null;
+  Logger.log("Last workout for "+user_id+" is "+last_workout_id);
+  var workouts=populateWorkoutsFromCutoff(user_id,username, last_workout_id);
+  eventEnd(event,workouts);
+  return workouts.length;
+}
+
+function populateWorkoutsFromCutoff(user_id,username, last_workout_id){
+  var event=eventStart("PopulateWorkoutsFromCutoff",user_id+","+username+","+last_workout_id);
+  var results=loadWorkoutsFromCutoff(user_id,username, last_workout_id);
   if(! results || !results.length) {
     eventEnd(event,"No workouts found");
-    return;
+    return [];
     }
 
-  purgeUserData(user_id,username);
+ if(!last_workout_id) purgeUserData(user_id,username);
 
   // Calculate VLookup Columns from Registration Sheet for Country and Airport Code
   // Google Data Studio is being really annoying about this
@@ -119,6 +143,11 @@ function populateWorkoutsFromCutoff(user_id,username){
      return (!hardware_filter  || workout.platform.indexOf(hardware_filter)>-1) && 
     (workout.buffering>1 || workout.bufferingv2 > 1);
   });
+  if(workouts.length==0){
+    eventEnd(event,workouts.length);
+    return workouts;
+  }
+  
   workouts=workouts.sort((a,b)=>{ return a.start-b.start ; });
   
   var cols=Object.keys(workouts[0]).sort();
@@ -150,6 +179,7 @@ function toDate(str){
   return new Date(str);
 }
 
+
 function purgeUserData(user_id, username){
   var event=eventStart("PurgeUserData",user_id+","+username);
   var sheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
@@ -165,7 +195,7 @@ function purgeUserData(user_id, username){
   eventEnd(event,data1.length-data.length);
 }
 
-function loadWorkoutsFromCutoff(user_id, username){
+function loadWorkoutsFromCutoff(user_id, username, last_workout_id){
   var config=getConfigDetails();
   var peloton=config.peloton;  
   var event=eventStart("LoadWorkoutsFromCutoff",user_id+","+username);
@@ -179,11 +209,18 @@ function loadWorkoutsFromCutoff(user_id, username){
     var results=getWorkoutsPage(user_id, page, page_size);
     Logger.log("Loading page "+page+ "//"+results.workouts.length);
     var valid=results.workouts.filter(function(workout){  return workout.start > cutoff;});
-    for(var i=0;i<valid.length;++i) all.push(valid[i]);
+    for(var i=0;i<valid.length;++i) {
+        if(last_workout_id && valid[i].id == last_workout_id){ 
+          Logger.log("Found last workout: " + last_workout_id);
+          done=true;
+          break;
+        }
+        all.push(valid[i]);
+     }
     Logger.log("Valid.length: "+valid.length+"//"+results.length);
     Logger.log("START TIME " +new Date(results.workouts[0].start)+ " CUTOFF "+new Date(cutoff));
     
-    if(valid.length<results.workouts.length || !results.show_next ){
+    if(done || valid.length<results.workouts.length || !results.show_next ){
        Logger.log("We are past the cutoff. Stop loading data at "+ all.length+" total rows");
        done=true;
      }  else {

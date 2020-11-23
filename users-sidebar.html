@@ -51,6 +51,17 @@ angular.module('pelotonApp', [])
          
     }
     
+    userController.processIncremental=function(user){
+    var name=user.username;
+    user.loading=true;
+       google.script.run.withSuccessHandler(function(result){
+         user.loading=false;
+         alert("Total rides loaded for "+name+": " +result);
+         $scope.$digest();
+         }).populateWorkoutsIncrementally(user.id, user.username);
+         };
+    
+    
     userController.searchUsers=function(){
         userController.searchText = userController.searchText.replace(/[^A-Za-z0-9_]/gi, "");
         userController.users=[];
@@ -130,6 +141,10 @@ angular.module('pelotonApp', [])
          ng-click="peloton.reprocessUser(user)" class="badge badge-pill badge-secondary" ng-disabled="user.loading">
           <i ng-if="user.loading" class="fa fa-circle-o-notch fa-spin fa-fw"></i>
           Reload Existing Results (If any)</button>
+           <button ng-if="user.relationship.me_to_user=='following' || !user.is_profile_private" 
+         ng-click="peloton.processIncremental(user)" class="badge badge-pill badge-secondary" ng-disabled="user.loading">
+          <i ng-if="user.loading" class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+          INCREMENTAL - Load new Results (If any)</button>
 
         </div>
      
