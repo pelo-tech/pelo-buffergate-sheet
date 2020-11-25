@@ -216,7 +216,16 @@ function loadWorkoutsFromCutoff(user_id, username, last_workout_id, page_size){
   
   
   while(!done){
-    var results=getWorkoutsPage(user_id, page, page_size);
+    var results=null;
+    try{ 
+      results=getWorkoutsPage(user_id, page, page_size);
+      } catch (e){
+        Logger.log(e);
+        Logger.log("Error while retrieving workouts for user "+username+".");
+        eventEnd(event,e);
+        return [];
+      }
+    
     Logger.log("Loading page "+page+ "//"+results.workouts.length);
     var valid=results.workouts.filter(function(workout){  return workout.start > cutoff;});
     for(var i=0;i<valid.length;++i) {
