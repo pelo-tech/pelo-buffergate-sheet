@@ -48,6 +48,42 @@ function reprocessUser(user_id,  username){
 
 }
 
+function incrementalProcessSelectedUsers(){
+  var sheet=SpreadsheetApp.getActiveSheet();
+  var users={};
+  
+  
+  if(sheet.getName()==REGISTRATION_SHEET_NAME){
+  var firstRow=sheet.getSelection().getActiveRange().getRow() ;
+  var lastRow=sheet.getSelection().getActiveRange().getLastRow() ;
+  Logger.log("Got Range - Rows "+firstRow+"-"+lastRow);
+      var allUsers=getDataAsObjects(sheet);
+      allUsers.forEach(user=>{
+          if(user._row >= firstRow && user._row<=lastRow)
+            users[user["UserID"]]=user;
+      });
+      Logger.log("Users to process: "+JSON.stringify(Object.keys(users)));
+     
+     var ui=SpreadsheetApp.getUi();
+     var confirm= ui.alert(
+     'Batch load users',
+     "Incrementally load "+Object.keys(users).length +" users. Are you sure?",
+      ui.ButtonSet.YES_NO);
+      
+      if(confirm==ui.Button.YES){
+        Logger.log("Reprocessing "+Object.keys(users).length+" Users");
+        var total=0;
+        Object.values(users).forEach(user=>{
+          Logger.log("Reprocessing Incrementally: "+user["Leaderboard Name"]);
+          total+= populateWorkoutsIncrementally(user["UserID"],user["Leaderboard Name"]);
+        });
+        return total;
+      }  else {
+        SpreadsheetApp.getUi().alert("Operation Cancelled");
+        return 0;
+      }
+  }
+}
 
 function showSidebarUsers() {
   var tmpl = HtmlService.createTemplateFromFile('users-sidebar.html').evaluate();
@@ -191,7 +227,7 @@ function onFormSubmit(event){
   
   if(workouts!=null && workouts.length>0){
     html+="<hr><h3>Buffering Workouts</h3><table border='1' cellspacing='0' cellpadding='3'>";
-    html+="<tr><th>Date</th><th>Title</th><th>Instructor</th><th>Duration(min)</th><th>Class Date</th><th>Timezone</th><th>Buffering(sec)</th><th>Output</th><th>PR</th><th>Platform</th><th>Links</th></tr>";
+    html+="<tr><th>Date</th><th>Title</th><th>Instructor</th><th>Duration(min)</th><th>Class Date</th><th>Timezone</th><th>Buffering(sec)</th><th>Buff.(v2)(sec)</th><th>Output</th><th>PR</th><th>Platform</th><th>Links</th></tr>";
     workouts.forEach(workout=>{
       html+="<tr>";
         html+="<td>"+Utilities.formatDate(new Date(workout.start),workout.timezone,"yyyy-MM-dd'T'HH:mm:ss'Z'")+"</td>";
@@ -201,6 +237,7 @@ function onFormSubmit(event){
         html+="<td>"+Utilities.formatDate(new Date(workout.aired),workout.timezone,"yyyy-MM-dd'T'HH:mm:ss'Z'")+"</td>";
         html+="<td>"+workout.timezone+"</td>";
         html+="<td align='center'>"+workout.buffering+"</td>";
+        html+="<td align='center'>"+workout.bufferingv2+"</td>";
         html+="<td>"+Utilities.formatString("%.0f",workout.output)+"</td>";
         html+="<td align='center'>"+workout.pr+"</td>";
         html+="<td>"+workout.platform+"</td>";

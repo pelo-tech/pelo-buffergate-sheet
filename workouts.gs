@@ -93,14 +93,23 @@ function populateWorkoutsIncrementally(user_id, username){
   var workout=getLastWorkout(user_id);
   var last_workout_id=(workout)?workout.id:null;
   Logger.log("Last workout for "+user_id+" is "+last_workout_id);
-  var workouts=populateWorkoutsFromCutoff(user_id,username, last_workout_id);
-  eventEnd(event,workouts);
+  var workouts=populateWorkoutsFromCutoff(user_id,username, workout);
+  eventEnd(event,workouts.length);
   return workouts.length;
 }
 
-function populateWorkoutsFromCutoff(user_id,username, last_workout_id){
+function populateWorkoutsFromCutoff(user_id,username, last_workout){
+  var last_workout_id=null;
+  var page_size=200;
+  if(last_workout){
+    last_workout_id=last_workout.id;
+    var days=Math.floor((new Date().getTime() - last_workout.start) / (1000*3600*24));
+    Logger.log("Working with last workout:"+last_workout_id +" "+days+" days ago.");
+    page_size=Math.min(200, Math.max(30, days*4));
+    Logger.log("Using Page size of :"+page_size);
+  }
   var event=eventStart("PopulateWorkoutsFromCutoff",user_id+","+username+","+last_workout_id);
-  var results=loadWorkoutsFromCutoff(user_id,username, last_workout_id);
+  var results=loadWorkoutsFromCutoff(user_id, username, last_workout_id,page_size);
   if(! results || !results.length) {
     eventEnd(event,"No workouts found");
     return [];
@@ -195,15 +204,16 @@ function purgeUserData(user_id, username){
   eventEnd(event,data1.length-data.length);
 }
 
-function loadWorkoutsFromCutoff(user_id, username, last_workout_id){
+function loadWorkoutsFromCutoff(user_id, username, last_workout_id, page_size){
   var config=getConfigDetails();
   var peloton=config.peloton;  
-  var event=eventStart("LoadWorkoutsFromCutoff",user_id+","+username);
+  var event=eventStart("LoadWorkoutsFromCutoff",user_id+","+username+",last="+last_workout_id+",pgsz="+page_size);
   var cutoff=new Date(config.peloton.cutoff_date).getTime();
   var all=[];
   var done=false;
   var page=0;
-  var page_size=200;
+  if (!page_size || page_size>200) page_size=200;
+  
   
   while(!done){
     var results=getWorkoutsPage(user_id, page, page_size);

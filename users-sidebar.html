@@ -19,7 +19,8 @@ angular.module('pelotonApp', [])
     userController.loading=false;
     userController.users=[];
     userController.searchText="";
-    
+    userController.batchProcessing=false;
+
     
     userController.followUser=function(user_id){
     var myUserId=user_id;
@@ -30,6 +31,7 @@ angular.module('pelotonApp', [])
         }
       }).followUser(user_id);
     }
+    
     
     userController.unfollowUser=function(user_id){
     var myUserId=user_id;
@@ -61,6 +63,16 @@ angular.module('pelotonApp', [])
          }).populateWorkoutsIncrementally(user.id, user.username);
          };
     
+    userController.processSelectedIncremental=function(){
+      userController.batchProcessing=true;
+      google.script.run.withSuccessHandler(function(result){
+            userController.batchProcessing=false;
+            alert("Loaded "+result+" workouts");
+                     $scope.$digest();
+
+          
+      }).incrementalProcessSelectedUsers();
+    }
     
     userController.searchUsers=function(){
         userController.searchText = userController.searchText.replace(/[^A-Za-z0-9_]/gi, "");
@@ -90,6 +102,9 @@ angular.module('pelotonApp', [])
 </head>
   <body ng-controller="PelotonUserController as peloton"  >
 <div class="card" style="width: 18rem;">
+  <button class="badge badge-primary" ng-disabled="peloton.batchProcessing" ng-click="peloton.processSelectedIncremental()"> 
+        <i ng-if="peloton.batchProcessing" class="fa fa-circle-o-notch fa-spin fa-fw"></i>  INCREMENTAL - Process Selected</button>
+          
    <div class="card-header">Find Users</div>
   <div class="card-body">
   <form  id="user-filter-form">
